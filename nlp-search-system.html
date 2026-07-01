@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NLP 自然语言处理 · 搜题系统</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f0f2f5;
+    --card-bg: #ffffff;
+    --primary: #4f6ef7;
+    --primary-light: #e8edff;
+    --primary-dark: #3b54d4;
+    --text: #1a1a2e;
+    --text-secondary: #6b7280;
+    --border: #e5e7eb;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --success-border: #a7f3d0;
+    --warning: #f59e0b;
+    --warning-bg: #fffbeb;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.1);
+    --radius: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    background: linear-gradient(135deg, #4f6ef7 0%, #7b5cf7 100%);
+    color: #fff;
+    padding: 32px 20px 80px;
+    text-align: center;
+    position: relative;
+  }
+  .header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .header p {
+    font-size: 14px;
+    opacity: 0.85;
+    margin-top: 6px;
+  }
+
+  /* ===== Search Section ===== */
+  .search-section {
+    max-width: 860px;
+    margin: -52px auto 0;
+    padding: 0 16px;
+    position: relative;
+    z-index: 10;
+  }
+  .search-box {
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    padding: 20px 24px;
+  }
+  .search-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .search-input-wrap svg {
+    position: absolute;
+    left: 14px;
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  .search-input {
+    flex: 1;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px 12px 44px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+    background: #fafbfc;
+  }
+  .search-input:focus {
+    border-color: var(--primary);
+    background: #fff;
+  }
+  .clear-btn {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 18px;
+    padding: 4px 8px;
+    display: none;
+  }
+  .clear-btn:hover { color: var(--danger); }
+
+  /* ===== Filters ===== */
+  .filters {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .filter-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .filter-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  /* ===== Stats Bar ===== */
+  .stats-bar {
+    max-width: 860px;
+    margin: 20px auto 0;
+    padding: 0 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .stats-bar .count strong {
+    color: var(--primary);
+    font-size: 15px;
+  }
+
+  /* ===== Question List ===== */
+  .question-list {
+    max-width: 860px;
+    margin: 16px auto 60px;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ===== Question Card ===== */
+  .q-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+    border: 1px solid transparent;
+  }
+  .q-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-1px);
+  }
+
+  .q-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px 0;
+    flex-wrap: wrap;
+  }
+  .q-type-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .q-type-badge.choice {
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+  .q-type-badge.fill {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+  .q-type-badge.case {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  .q-num {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  .q-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-left: auto;
+  }
+  .q-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #f3f4f6;
+    color: var(--text-secondary);
+  }
+
+  .q-body {
+    padding: 12px 20px 16px;
+  }
+  .q-title {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.7;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+  .q-title .blank {
+    display: inline-block;
+    border-bottom: 2px solid var(--primary);
+    min-width: 40px;
+    text-align: center;
+    color: var(--primary);
+    font-weight: 700;
+  }
+
+  /* Options */
+  .q-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .q-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #f9fafb;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    transition: all 0.15s;
+  }
+  .q-option.correct {
+    background: var(--success-bg);
+    border-color: var(--success-border);
+  }
+  .q-option-letter {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .q-option.correct .q-option-letter {
+    background: var(--success);
+    color: #fff;
+  }
+  .q-option-text {
+    flex: 1;
+    line-height: 1.5;
+  }
+  .q-option .correct-mark {
+    color: var(--success);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  /* Answer & Analysis Toggle */
+  .q-toggle {
+    margin-top: 12px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+  .toggle-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    transition: opacity 0.2s;
+  }
+  .toggle-btn:hover { opacity: 0.7; }
+  .toggle-btn .arrow {
+    transition: transform 0.2s;
+    font-size: 10px;
+  }
+  .toggle-btn.open .arrow {
+    transform: rotate(180deg);
+  }
+
+  .q-detail {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .q-detail.open {
+    max-height: 2000px;
+  }
+  .q-detail-inner {
+    padding: 12px 0 4px;
+  }
+  .detail-block {
+    margin-bottom: 12px;
+  }
+  .detail-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .detail-content {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    background: #f9fafb;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+  }
+  .detail-block.answer .detail-content {
+    border-left-color: var(--success);
+    background: var(--success-bg);
+    font-weight: 600;
+    color: #065f46;
+  }
+  .detail-block.analysis .detail-content {
+    border-left-color: var(--warning);
+    background: var(--warning-bg);
+    color: #78350f;
+  }
+  .detail-block.case-sub .detail-content {
+    border-left-color: var(--primary);
+    background: #f5f7ff;
+  }
+
+  /* Sub-questions for case analysis */
+  .case-sub-item {
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .case-sub-item .sub-q {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .case-sub-item .sub-a {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.8;
+    white-space: pre-wrap;
+  }
+
+  /* No results */
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+  }
+  .no-results svg {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+  }
+  .no-results p {
+    font-size: 15px;
+  }
+
+  /* Highlight */
+  mark {
+    background: #fff59d;
+    color: inherit;
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .header { padding: 24px 16px 70px; }
+    .header h1 { font-size: 20px; }
+    .search-box { padding: 16px; }
+    .q-header { padding: 12px 16px 0; }
+    .q-body { padding: 10px 16px 14px; }
+    .q-tags { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>📖 NLP 自然语言处理 · 搜题系统</h1>
+  <p>期末复习 16 题全收录 · 关键词秒搜 · 答案解析一目了然</p>
+</div>
+
+<!-- Search Section -->
+<div class="search-section">
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="搜索题目、知识点、关键词…  例如：TF-IDF、分词、聚类、朴素贝叶斯" />
+      <button class="clear-btn" id="clearBtn">✕</button>
+    </div>
+    <div class="filters" id="filters">
+      <button class="filter-btn active" data-type="all">全部题目</button>
+      <button class="filter-btn" data-type="choice">单选题</button>
+      <button class="filter-btn" data-type="fill">填空题</button>
+      <button class="filter-btn" data-type="case">案例分析题</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Bar -->
+<div class="stats-bar">
+  <div class="count">共 <strong id="totalCount">16</strong> 道题目 · 显示 <strong id="showCount">16</strong> 道</div>
+  <div id="searchInfo"></div>
+</div>
+
+<!-- Question List -->
+<div class="question-list" id="questionList"></div>
+
+<script>
+// ===== Question Data =====
+const questions = [
+  {
+    id: 1,
+    type: "choice",
+    typeLabel: "单选题",
+    tags: ["中文分词", "逆向最大匹配", "最大匹配算法"],
+    title: "中文分词中，逆向最大匹配算法的执行顺序是（）",
+    options: [
+      { letter: "A", text: "从文本头部向左匹配", correct: false },
+      { letter: "B", text: "从文本尾部向左匹配", correct: true },
+      { letter: "C", text: "从文本头部向右匹配", correct: false },
+      { letter: "D", text: "从文本尾部向右匹配", correct: false }
+    ],
+    answer: "B",
+    analysis: "正向最大匹配从文本头部从左向右匹配；逆向最大匹配从文本尾部开始，从右向左截取字符进行匹配，统计表明其分词正确率通常高于正向匹配。"
+  },
+  {
+    id: 2,
+    type: "choice",
+    typeLabel: "单选题",
+    tags: ["中文分词", "基于词典分词", "词典分词缺点"],
+    title: "以下不属于基于词典分词缺点的是（）",
+    options: [
+      { letter: "A", text: "易产生分词歧义", correct: false },
+      { letter: "B", text: "依赖预设词典", correct: false },
+      { letter: "C", text: "计算量大、运行效率低", correct: true },
+      { letter: "D", text: "无法有效处理未登录词", correct: false }
+    ],
+    answer: "C",
+    analysis: "基于词典的分词（正向/逆向/双向最大匹配）属于机械分词，计算简单、效率高；缺点是依赖词典、易出现歧义、难以识别词典外的未登录词。"
+  },
+  {
+    id: 3,
+    type: "choice",
+    typeLabel: "单选题",
+    tags: ["TF-IDF", "特征权重", "文本挖掘"],
+    title: "TF-IDF 主要用于文本挖掘中的哪一环节（）",
+    options: [
+      { letter: "A", text: "文本分词", correct: false },
+      { letter: "B", text: "特征词权重计算与特征选择", correct: true },
+      { letter: "C", text: "文本聚类", correct: false },
+      { letter: "D", text: "关联规则挖掘", correct: false }
+    ],
+    answer: "B",
+    analysis: "TF-IDF 是经典的特征权重算法，用于评估词汇对文档的重要程度，是文本特征词选择、权重赋值的核心方法。"
+  },
+  {
+    id: 4,
+    type: "choice",
+    typeLabel: "单选题",
+    tags: ["VSM", "向量空间模型", "余弦相似度", "文本相似度"],
+    title: "向量空间模型（VSM）中，衡量两个文本相似度最常用的指标是（）",
+    options: [
+      { letter: "A", text: "曼哈顿距离", correct: false },
+      { letter: "B", text: "欧氏距离", correct: false },
+      { letter: "C", text: "余弦相似度", correct: true },
+      { letter: "D", text: "切比雪夫距离", correct: false }
+    ],
+    answer: "C",
+    analysis: "向量空间模型将文本转为特征向量，余弦相似度通过向量夹角判断文本相似度，是文本领域最主流的相似度计算方式。"
+  },
+  {
+    id: 5,
+    type: "choice",
+    typeLabel: "单选题",
+    tags: ["无监督学习", "文本聚类", "文本分类"],
+    title: "下列属于无监督学习的文本任务是（）",
+    options: [
+      { letter: "A", text: "文本分类", correct: false },
+      { letter: "B", text: "文本聚类", correct: true },
+      { letter: "C", text: "垃圾邮件过滤", correct: false },
+      { letter: "D", text: "情感分类", correct: false }
+    ],
+    answer: "B",
+    analysis: "文本分类、垃圾邮件过滤、情感分类均为有监督学习（需要标注类别）；文本聚类无需预先标注类别，属于典型无监督学习。"
+  },
+  {
+    id: 6,
+    type: "choice",
+    typeLabel: "单选题",
+    tags: ["K-Means", "聚类算法", "基于划分"],
+    title: "K-Means 聚类算法属于以下哪一类聚类方法（）",
+    options: [
+      { letter: "A", text: "基于划分的聚类", correct: true },
+      { letter: "B", text: "基于层次的聚类", correct: false },
+      { letter: "C", text: "基于密度的聚类", correct: false },
+      { letter: "D", text: "基于网格的聚类", correct: false }
+    ],
+    answer: "A",
+    analysis: "K-Means、K-Medoids 是基于划分的经典算法；AGNES/DIANA 为层次聚类，DBSCAN 为密度聚类，STING 为网格聚类。"
+  },
+  {
+    id: 7,
+    type: "choice",
+    typeLabel: "单选题",
+    tags: ["Apriori", "关联规则挖掘", "FP-Growth"],
+    title: "Apriori 算法主要用于文本挖掘中的（）",
+    options: [
+      { letter: "A", text: "文本分类", correct: false },
+      { letter: "B", text: "情感分析", correct: false },
+      { letter: "C", text: "关联规则挖掘", correct: true },
+      { letter: "D", text: "关键词提取", correct: false }
+    ],
+    answer: "C",
+    analysis: "Apriori、FP-Growth 是两大经典关联规则挖掘算法，用于挖掘特征词、文档之间的关联关系。"
+  },
+  {
+    id: 8,
+    type: "choice",
+    typeLabel: "单选题",
+    tags: ["Jieba", "分词模式", "中文分词"],
+    title: "Jieba 分词库不支持以下哪种分词模式（）",
+    options: [
+      { letter: "A", text: "精确模式", correct: false },
+      { letter: "B", text: "全模式", correct: false },
+      { letter: "C", text: "搜索引擎模式", correct: false },
+      { letter: "D", text: "逆向模式", correct: true }
+    ],
+    answer: "D",
+    analysis: "Jieba 内置三种分词模式：精确模式、全模式、搜索引擎模式；逆向模式是传统最大匹配分词的规则，并非 Jieba 内置模式。"
+  },
+  {
+    id: 9,
+    type: "choice",
+    typeLabel: "单选题",
+    tags: ["F1值", "查准率", "查全率", "评估指标"],
+    title: "在文本分类评估指标中，F1 值是综合哪两个指标得到的（）",
+    options: [
+      { letter: "A", text: "准确率、错误率", correct: false },
+      { letter: "B", text: "查准率、查全率", correct: true },
+      { letter: "C", text: "宏平均、微平均", correct: false },
+      { letter: "D", text: "距离、相似度", correct: false }
+    ],
+    answer: "B",
+    analysis: "F-measure（F值）综合查准率（Precision）和查全率（Recall），F1 是 β=1 时的标准 F 值，是分类模型核心综合评估指标。"
+  },
+  {
+    id: 10,
+    type: "choice",
+    typeLabel: "单选题",
+    tags: ["DBSCAN", "密度聚类", "聚类算法"],
+    title: "DBSCAN 算法的核心思想是（）",
+    options: [
+      { letter: "A", text: "预先指定聚类数 k，迭代更新聚类中心", correct: false },
+      { letter: "B", text: "根据数据密度划分簇，可识别任意形状聚类与噪声", correct: true },
+      { letter: "C", text: "逐层合并/分裂簇形成聚类树", correct: false },
+      { letter: "D", text: "将空间划分为网格单元实现聚类", correct: false }
+    ],
+    answer: "B",
+    analysis: "DBSCAN 是基于密度的聚类算法，依靠邻域密度划分簇，能发现任意形状的聚类并识别噪声点；A 是 K-Means，C 是层次聚类，D 是 STING 网格聚类。"
+  },
+  {
+    id: 11,
+    type: "fill",
+    typeLabel: "填空题",
+    tags: ["双向最大匹配", "中文分词", "逆向最大匹配"],
+    title: "双向最大匹配算法：若正向、逆向分词结果不同且词语个数相同时，优先选择 <span class='blank'>？</span> 匹配结果。",
+    answer: "逆向",
+    analysis: "双向匹配规则：结果一致则任选；结果不同取词语数量更少的；数量相同则选用逆向最大匹配结果。"
+  },
+  {
+    id: 12,
+    type: "fill",
+    typeLabel: "填空题",
+    tags: ["文本预处理", "分词", "词性标注"],
+    title: "文本预处理的核心步骤：分段→分句→<span class='blank'>？</span>→词性标注→停用词过滤→特征选择。",
+    answer: "分词",
+    analysis: "中文文本预处理标准流程：分段、分句、分词、词性标注、过滤停用词、特征词筛选、向量表示。"
+  },
+  {
+    id: 13,
+    type: "fill",
+    typeLabel: "填空题",
+    tags: ["朴素贝叶斯", "特征独立假设", "分类器"],
+    title: "朴素贝叶斯分类器的核心前提假设是：文本中所有 <span class='blank'>？</span> 相互独立。",
+    answer: "特征词（特征项）",
+    analysis: "「朴素」二字即代表特征词相互独立的强假设，这也是朴素贝叶斯的核心约束。"
+  },
+  {
+    id: 14,
+    type: "fill",
+    typeLabel: "填空题",
+    tags: ["FP-Growth", "Apriori", "关联规则挖掘"],
+    title: "FP-Growth 算法相比 Apriori 算法的最大优势是：仅需扫描 <span class='blank'>？</span> 次数据集，且不产生大量候选项集，效率更高。",
+    answer: "2（两）",
+    analysis: "Apriori 需要多次扫描数据集、生成海量候选项集；FP-Growth 仅两次扫描数据集，通过构建 FP 树挖掘频繁项集，性能更优。"
+  },
+  {
+    id: 15,
+    type: "fill",
+    typeLabel: "填空题",
+    tags: ["TextRank", "PageRank", "关键词提取"],
+    title: "TextRank 算法是基于 <span class='blank'>？</span> 算法改进而来，常用于文本关键词提取和自动摘要。",
+    answer: "PageRank",
+    analysis: "TextRank 借鉴网页排序的 PageRank 思想，将词语/句子作为节点，根据共现/相似度构建图结构，计算节点重要性，实现关键词、摘要提取。"
+  },
+  {
+    id: 16,
+    type: "case",
+    typeLabel: "案例分析题",
+    tags: ["情感分析", "中文分词", "停用词过滤", "文本特征"],
+    score: "40分",
+    title: "现有一段中文文本：「这家手机拍照效果极好，运行流畅，但是续航太差了，系统也不好用。」结合课程所学情感分析、中文分词、停用词过滤、文本特征相关知识，完成以下问题。",
+    subQuestions: [
+      {
+        q: "问题1（12分）：请简述基于规则的中文情感分析通用流程。",
+        a: "（1）文本预处理：对原始文本进行分句、中文分词，将整段文本拆分为独立词语；\n（2）基础词汇匹配：加载情感词典（积极/消极情感词）、程度副词词典、否定词词典，匹配文本中的对应词汇；\n（3）权重计算：为情感词赋予基础分值，根据程度词放大/缩小情感分值，根据否定词反转情感极性（否定词奇数个反转，偶数个不变）；\n（4）特殊符号处理：识别感叹号、问号等标点，对情感强度进行二次修正；\n（5）总分统计与极性判断：统计整段文本的积极、消极总分，对比分值判定文本整体情感倾向（积极/消极/中性）。\n\n评分标准：分词预处理（3分）、词典匹配（3分）、程度/否定词加权（3分）、标点修正（2分）、极性判定（1分）。"
+      },
+      {
+        q: "问题2（16分）：对该文本进行人工分词，并列举出其中的情感词、程度词、否定词、标点符号。",
+        a: "（1）人工分词结果（4分）：\n这家/手机/拍照/效果/极好/，/运行/流畅/，/但是/续航/太差/了/，/系统/也/不好/用/。\n\n（2）词汇分类（每类3分，共12分）：\n• 情感词（表达主观褒贬）：极好、流畅、差、不好\n• 程度词（修饰情感强度）：极、太\n• 否定词（反转情感极性）：不\n• 标点符号：，、。\n\n解析：\n情感词分为积极（极好、流畅）和消极（差、不好），是情感判断的核心；\n「极」「太」属于典型程度副词，会增强原有情感的强度；\n「不」为单字否定词，反转「好」的积极语义，变为消极；\n逗号、句号为句内/句末标点，感叹号在此例句中未出现。"
+      },
+      {
+        q: "问题3（12分）：结合该例句，说明停用词过滤在文本分析中的作用。",
+        a: "停用词指「这家、了、也、但是」这类无实际语义、仅承担语法功能的词汇，结合本例句，作用分为3点：\n\n（1）降低特征维度，提升运算效率：停用词数量多、无区分能力，过滤后减少参与计算的词汇数量，降低后续情感分析、特征计算的开销；\n\n（2）剔除噪声，突出核心特征：本句中「这家、了、也」等词汇无法体现情感倾向，过滤后可聚焦情感词、程度词等有效特征，避免噪声干扰判断；\n\n（3）提升分析准确率：停用词不携带文本主题与情感信息，保留会稀释有效特征的权重，过滤后能让情感分值、特征权重的计算更精准。"
+      }
+    ]
+  }
+];
+
+// ===== State =====
+let currentFilter = "all";
+let currentSearch = "";
+
+// ===== DOM =====
+const searchInput = document.getElementById("searchInput");
+const clearBtn = document.getElementById("clearBtn");
+const filtersEl = document.getElementById("filters");
+const listEl = document.getElementById("questionList");
+const totalCountEl = document.getElementById("totalCount");
+const showCountEl = document.getElementById("showCount");
+const searchInfoEl = document.getElementById("searchInfo");
+
+// ===== Escape HTML =====
+function esc(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ===== Highlight search term =====
+function highlight(text, term) {
+  if (!term) return text;
+  const escaped = esc(term);
+  const safeText = text.includes("<") ? text : esc(text);
+  const regex = new RegExp(`(${escaped.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+  return safeText.replace(regex, "<mark>$1</mark>");
+}
+
+// ===== Render a question card =====
+function renderQuestion(q, term) {
+  const titleHtml = highlight(q.title, term);
+  let optionsHtml = "";
+  if (q.options) {
+    optionsHtml = '<div class="q-options">';
+    q.options.forEach(opt => {
+      const textHtml = highlight(esc(opt.text), term);
+      optionsHtml += `
+        <div class="q-option ${opt.correct ? 'correct' : ''}">
+          <div class="q-option-letter">${opt.letter}</div>
+          <div class="q-option-text">${textHtml}</div>
+          ${opt.correct ? '<span class="correct-mark">✓</span>' : ''}
+        </div>`;
+    });
+    optionsHtml += '</div>';
+  }
+
+  // Sub-questions for case analysis
+  let subHtml = "";
+  if (q.subQuestions) {
+    subHtml = '<div style="margin-top:12px;display:flex;flex-direction:column;gap:12px;">';
+    q.subQuestions.forEach((sub, i) => {
+      const qHtml = highlight(esc(sub.q), term);
+      const aHtml = highlight(esc(sub.a), term);
+      subHtml += `
+        <div class="case-sub-item">
+          <div class="sub-q">${qHtml}</div>
+          <div class="sub-a">${aHtml}</div>
+        </div>`;
+    });
+    subHtml += '</div>';
+  }
+
+  // Answer & Analysis detail
+  let detailHtml = "";
+  if (q.subQuestions) {
+    // For case questions, the sub-questions ARE the detail
+    detailHtml = "";
+  } else {
+    detailHtml = `
+      <div class="q-detail">
+        <div class="q-detail-inner">
+          <div class="detail-block answer">
+            <div class="detail-label">✅ 正确答案</div>
+            <div class="detail-content">${highlight(esc(q.answer), term)}</div>
+          </div>
+          <div class="detail-block analysis">
+            <div class="detail-label">💡 解析</div>
+            <div class="detail-content">${highlight(esc(q.analysis), term)}</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  const showToggle = !q.subQuestions; // case questions show everything directly
+
+  return `
+    <div class="q-card" data-id="${q.id}">
+      <div class="q-header">
+        <span class="q-type-badge ${q.type}">${q.typeLabel}</span>
+        <span class="q-num">第 ${q.id} 题${q.score ? ' · ' + q.score : ''}</span>
+        <div class="q-tags">
+          ${q.tags.map(t => `<span class="q-tag">${highlight(esc(t), term)}</span>`).join('')}
+        </div>
+      </div>
+      <div class="q-body">
+        <div class="q-title">${titleHtml}</div>
+        ${optionsHtml}
+        ${subHtml}
+        ${showToggle ? `
+          <div class="q-toggle">
+            <button class="toggle-btn" onclick="toggleDetail(this)">
+              查看答案与解析 <span class="arrow">▼</span>
+            </button>
+            ${detailHtml}
+          </div>
+        ` : ''}
+      </div>
+    </div>`;
+}
+
+// ===== Toggle detail =====
+window.toggleDetail = function(btn) {
+  const detail = btn.nextElementSibling;
+  const isOpen = detail.classList.toggle("open");
+  btn.classList.toggle("open", isOpen);
+  btn.innerHTML = isOpen
+    ? '收起答案与解析 <span class="arrow">▼</span>'
+    : '查看答案与解析 <span class="arrow">▼</span>';
+};
+
+// ===== Filter & Search =====
+function getFiltered() {
+  const term = currentSearch.trim().toLowerCase();
+  return questions.filter(q => {
+    // Type filter
+    if (currentFilter !== "all" && q.type !== currentFilter) return false;
+    if (!term) return true;
+    // Search in title, tags, answer, analysis, options
+    const haystack = [
+      q.title,
+      q.answer || "",
+      q.analysis || "",
+      ...(q.tags || []),
+      ...(q.options || []).map(o => o.text),
+      ...(q.subQuestions || []).flatMap(s => [s.q, s.a])
+    ].join(" ").toLowerCase();
+    return haystack.includes(term);
+  });
+}
+
+// ===== Render =====
+function render() {
+  const filtered = getFiltered();
+  const term = currentSearch.trim();
+
+  showCountEl.textContent = filtered.length;
+  totalCountEl.textContent = questions.length;
+  searchInfoEl.textContent = term ? `搜索"${term}"` : "";
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = `
+      <div class="no-results">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 21l-4.35-4.35M11 17a6 6 0 100-12 6 6 0 000 12z"/>
+        </svg>
+        <p>没有找到相关题目，试试其他关键词？</p>
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(q => renderQuestion(q, term)).join("");
+}
+
+// ===== Event Listeners =====
+searchInput.addEventListener("input", (e) => {
+  currentSearch = e.target.value;
+  clearBtn.style.display = currentSearch ? "block" : "none";
+  render();
+});
+
+clearBtn.addEventListener("click", () => {
+  searchInput.value = "";
+  currentSearch = "";
+  clearBtn.style.display = "none";
+  searchInput.focus();
+  render();
+});
+
+filtersEl.addEventListener("click", (e) => {
+  if (e.target.classList.contains("filter-btn")) {
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+    currentFilter = e.target.dataset.type;
+    render();
+  }
+});
+
+// Keyboard shortcut: focus search with "/"
+document.addEventListener("keydown", (e) => {
+  if (e.key === "/" && document.activeElement !== searchInput) {
+    e.preventDefault();
+    searchInput.focus();
+  }
+});
+
+// ===== Init =====
+render();
+</script>
+
+</body>
+</html>
